@@ -61,15 +61,16 @@
 
 <p>Logswan is a fast Web log analyzer using probabilistic data structures. It is targeted at very large log files, typically APIs logs. It has constant memory usage regardless of the log file size, and takes approximatively 4MB of RAM.</p>
 
-<p>Unique visitors counting is performed using two HyperLogLog counters (one for IPv4, and another one for IPv6), providing a relative accuracy of 0.10%.</p>
+<p>Unique visitors counting is performed using two HyperLogLog counters (one for IPv4, and another one for IPv6), providing a relative accuracy of 0.10%. String representations of IP addresses are used and preferred as they offer better precision.</p>
 
 <p>Project design goals include : speed, memory-usage efficiency, and keeping the code as simple as possible.</p>
 
 <p>Logswan is <strong>opinionated software</strong> :</p>
 
 <ul>
-<li>It only supports the Common Log Format, in order to keep the parsing code simple</li>
+<li>It only supports the Common Log Format, in order to keep the parsing code simple. It can of course process the Combined Log Format as well (referer and user agent fields will be discarded)</li>
 <li>It does not split results per day, but log files can be split prior to being processed</li>
+<li>Input file size and bandwidth usage are reported in bytes, there are no plans to format or round them</li>
 </ul>
 
 <h2>
@@ -78,16 +79,15 @@
 <p>Currently implemented features :</p>
 
 <ul>
+<li>Counting bandwidth used</li>
 <li>Counting number of processed lines / invalid lines</li>
 <li>Counting number of hits (IPv4 and IPv6 hits)</li>
-<li>Counting bandwidth used</li>
-<li>Counting log file size</li>
-<li>GeoIP lookups (for both IPv4 and IPv6)</li>
-<li>HTTP status codes distribution</li>
-<li>Hourly hits distribution</li>
-<li>Counting hits per protocol (HTTP/1.0 or HTTP/1.1)</li>
-<li>Counting hits per HTTP Method</li>
 <li>Counting visits (unique IP addresses for both IPv4 and IPv6)</li>
+<li>GeoIP lookups (for both IPv4 and IPv6)</li>
+<li>Hourly hits distribution</li>
+<li>HTTP method distribution</li>
+<li>HTTP protocol (HTTP/1.0 or HTTP/1.1) distribution</li>
+<li>HTTP status codes distribution</li>
 </ul>
 
 <h2>
@@ -126,6 +126,12 @@ make
 <p>Logswan packages are available for :</p>
 
 <h3>
+<a id="openbsd" class="anchor" href="#openbsd" aria-hidden="true"><span class="octicon octicon-link"></span></a>OpenBSD</h3>
+
+<pre><code>pkg_add logswan
+</code></pre>
+
+<h3>
 <a id="pkgsrc-netbsd-smartos-mac-os-x-etc" class="anchor" href="#pkgsrc-netbsd-smartos-mac-os-x-etc" aria-hidden="true"><span class="octicon octicon-link"></span></a>Pkgsrc (NetBSD, SmartOS, Mac OS X, etc.)</h3>
 
 <pre><code>pkgin install logswan
@@ -134,39 +140,43 @@ make
 <h3>
 <a id="geoip-databases" class="anchor" href="#geoip-databases" aria-hidden="true"><span class="octicon octicon-link"></span></a>GeoIP databases</h3>
 
-<p>Logswan requires the free GeoLite databases to be installed in <code>/usr/local/share/GeoIP</code>.
-Files can be downloaded here : <a href="http://dev.maxmind.com/geoip/legacy/geolite/">http://dev.maxmind.com/geoip/legacy/geolite/</a></p>
+<p>By default, Logswan looks for GeoIP databases in <code>${CMAKE_INSTALL_PREFIX}/share/GeoIP</code>, which points to <code>/usr/local/share/GeoIP</code> by default.</p>
+
+<p>A custom directory can be set using the <code>DATADIR</code> variable when invoking CMake :</p>
+
+<pre><code>cmake -DDATADIR=/var/db/GeoIP .
+</code></pre>
+
+<p>The free GeoLite databases can be downloaded here : <a href="http://dev.maxmind.com/geoip/legacy/geolite/">http://dev.maxmind.com/geoip/legacy/geolite/</a></p>
 
 <h4>
 <a id="for-ipv4-support-only-" class="anchor" href="#for-ipv4-support-only-" aria-hidden="true"><span class="octicon octicon-link"></span></a>For IPv4 support only :</h4>
 
-<pre><code>mkdir -p /usr/local/share/GeoIP
-cd /usr/local/share/GeoIP
-wget https://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz
-gunzip *gz
+<pre><code>https://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz
 </code></pre>
 
 <h4>
 <a id="for-ipv4-and-ipv6-support-" class="anchor" href="#for-ipv4-and-ipv6-support-" aria-hidden="true"><span class="octicon octicon-link"></span></a>For IPv4 and IPv6 support :</h4>
 
-<pre><code>mkdir -p /usr/local/share/GeoIP
-cd /usr/local/share/GeoIP
-wget https://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz
-wget https://geolite.maxmind.com/download/geoip/database/GeoIPv6.dat.gz
-gunzip *gz
+<pre><code>https://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz
+https://geolite.maxmind.com/download/geoip/database/GeoIPv6.dat.gz
 </code></pre>
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
 
-<pre><code>USAGE : logswan [options] inputfile
+<pre><code>logswan [-hv] file
 </code></pre>
+
+<p>If file is a single dash (`-'), logswan reads from the standard input.</p>
 
 <p>Options are :</p>
 
 <pre><code>-h Display usage
 -v Display version
 </code></pre>
+
+<p>Logswan outputs JSON data to <strong>stdout</strong>. </p>
 
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
